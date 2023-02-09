@@ -21,7 +21,7 @@ contract VehiclesSwap is Ownable {
         address ownerOf; // is wallet address of the vehicle owner
         string make;
         string model;
-        string year; // Unix timestamp.
+        string year;
         string value; // amount of value in $
         string VIN;
         string verifiedOwner;
