@@ -2,17 +2,13 @@
 pragma solidity ^0.8.9;
 
 import "./access/Ownable.sol";
-import "./utils/Counters.sol";
 
 error OnlyOwnerOf();
 
 contract VehiclesSwap is Ownable {
-    using Counters for Counters.Counter;
-
-    /****************************************************************************/
-    /****************************************************************************/
-    Counters.Counter private vehicleIndexes;
     mapping(address => Vehicle[]) private vehicleInfo;
+    mapping(address => bool) private _isOwners;
+    address[] private _owners;
 
     /****************************************************************************/
     /****************************************************************************/
@@ -50,11 +46,15 @@ contract VehiclesSwap is Ownable {
      * @dev adds vehicle to vehicleInfo mapping and updates owner index.
      */
     function registerVehicle(Vehicle memory _vehicle) external {
-        vehicleIndexes.increment(); // start counter at 1
-        uint256 vehicleIndex_ = vehicleIndexes.current();
+        uint256 vehicleIndex_ = vehicleInfo[_msgSender()].length;
         _vehicle.index = vehicleIndex_;
         _vehicle.ownerOf = _msgSender();
         vehicleInfo[_msgSender()].push(_vehicle);
+
+        if (!_isOwners[_msgSender()]) {
+            _isOwners[_msgSender()] = true;
+            _owners.push(_msgSender());
+        }
 
         emit RegisterdVehicle(_msgSender(), vehicleIndex_);
     }
@@ -65,7 +65,7 @@ contract VehiclesSwap is Ownable {
     function modifyVehicleInfo(Vehicle memory _vehicle) external {
         Vehicle memory vehicle_ = vehicleInfo[_msgSender()][_vehicle.index];
         if (vehicle_.ownerOf != _msgSender()) revert OnlyOwnerOf();
-        vehicleInfo[_msgSender()][_vehicle.index] = vehicle_;
+        vehicleInfo[_msgSender()][_vehicle.index] = _vehicle;
     }
 
     /**
@@ -93,5 +93,12 @@ contract VehiclesSwap is Ownable {
         returns (Vehicle[] memory)
     {
         return vehicleInfo[_owner];
+    }
+
+    /**
+     * @dev returns all addresses of owners who have registerd vehicle
+     */
+    function owners() external view returns (address[] memory) {
+        return _owners;
     }
 }
